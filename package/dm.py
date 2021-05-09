@@ -100,11 +100,11 @@ class DM:
                     await self.__ws_message__(body)
                 else:
                     body = json.loads(body.decode('utf-8'))
-                    if body.get('cmd').find('LIVE') != -1:  # 开播
+                    if body.get('cmd') == "LIVE":  # 开播
                         print('【%s】web socket 开播' % self.name)
                         await self.queue.put({'live_status': 'LIVE', 'uid': self.uid, 'room_id': self._room_id,
                                               'true_room': self.room_id, 'name': self.name})
-                    elif body.get('cmd').find('PREPARING') != -1:  # 下播
+                    elif body.get('cmd') == "PREPARING":  # 下播
                         print('【%s】web socket 下播' % self.name)
                         await self.queue.put({'live_status': 'PREPARING', 'uid': self.uid, 'room_id': self.room_id,
                                               'true_room': self.room_id, 'name': self.name})
