@@ -1,6 +1,7 @@
 import asyncio
 import time
 from package import dm, send_message
+from string import Template
 
 """
 需要 aiohttp 模块进行 WebSocket 连接
@@ -24,6 +25,26 @@ room_list
     sc_token: 你的 SCKEY
 """
 
+
+def now_time() -> str:
+    nt = time.strftime(u'%Y年%m月%d日 %H:%M:%S'.encode('unicode_escape').decode('utf8'),
+                       time.localtime()).encode('utf-8').decode('unicode_escape')
+    return nt
+
+
+# 标题模板
+live_title = "【${name}】 ${status}"
+# 内容模板
+live_content = "【${name}】 ${status}\n${time}"
+
+template_title = Template(live_title)
+template_content = Template(live_content)
+
+kv = {
+    "LIVE": "开播啦",
+    "PREPARING": "下播啦",
+    "time": now_time
+}
 
 room_list = [  # 房间ID，每个ID用 英文逗号 隔开
     931774
@@ -53,10 +74,13 @@ async def get_message(queue):
             room_result[data['room_id']] = True
         else:
             room_result[data['room_id']] = False
-        text = '【%s】%s\n%s' % (data['name'], '开播啦' if data['live_status'] == 'LIVE' else '下播啦',
-                               time.strftime(u'%Y年%m月%d日 %H:%M:%S'.encode('unicode_escape').decode('utf8'),
-                                             time.localtime()).encode('utf-8').decode('unicode_escape'))
-        title = '【%s】%s' % (data['name'], '开播啦' if data['live_status'] == 'LIVE' else '下播啦')
+        template_data = {
+            "name": data["name"],
+            "status": kv[data["live_status"]],
+            "time": now_time()
+        }
+        text = template_content.safe_substitute(template_data)
+        title = template_title.safe_substitute(template_data)
         await s_m.send(tg=tg, sc=sc, sc_title=title, text=text)
 
 

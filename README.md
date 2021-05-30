@@ -4,10 +4,26 @@
 ## 准备模块
 1. 安装模块：`aiohttp` 或 `pip install -r requirements.txt`
 
-## 设置提示方式
-* 编辑 `main.py` 文件，`room_list` 内添加直播间ID，选择提示方式，并配置好 `token`
-1. Telegram【需要获取 账号的ID，及 Bot 的 Token】
-2. [Server酱](http://sc.ftqq.com/3.version) 【通过微信提醒】
+## 配置 （主要编辑 `main.py` 文件）
+- 添加直播间
+  - `room_list` 内添加直播间ID。**整数类型，不要用 *引号* 括起来**
+- 配置提醒方式
+  - Telegram
+    - 令 `tg = True`
+    - `tg_token` 为 **Telegram机器人 的 Token**
+    - `tg_id` 为 **Telegram个人账号 的 ID**
+  - 微信提醒
+    - [Server酱](http://sc.ftqq.com/3.version)
+      - 令 `sc = True`
+      - `sc_token` 为 **Server酱 的 Token**
+- 模板（可选配置）
+  - **通知提醒** 的 **标题** 和 **内容** 对应的模板为 `live_title` 和 `live_content`
+  - 占位符
+    - name: 主播名字
+    - status: **开播** 或 **下播**
+      - 可修改 `kv` 对应的值，从而改变生成的内容
+    - time: 开播/下播 时间
+      - 默认格式是 `年-月-日 时:分:秒`,可修改 `now_time` 函数的返回值
 
 ## 运行
 1. 运行 `main.py` 文件，`python ./main.py`
