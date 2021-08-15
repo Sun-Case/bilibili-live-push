@@ -17,7 +17,8 @@ class DM:
     token = ''
     ws = None
     HEADER_STRUCT = struct.Struct('>I2H2I')
-    HeaderTuple = namedtuple('HeaderTuple', ('pack_len', 'raw_header_size', 'ver', 'operation', 'seq_id'))
+    HeaderTuple = namedtuple(
+        'HeaderTuple', ('pack_len', 'raw_header_size', 'ver', 'operation', 'seq_id'))
     heart_beat = 2
     popularity = 3
     msg = 5
@@ -25,9 +26,7 @@ class DM:
     h_b = 8
     api_check_sleep = 60
 
-    def __init__(self, room_id: int, queue, loop=None, ssl=None):
-        if not room_id:
-            raise Exception('room_id 错误')
+    def __init__(self, room_id: int, queue, loop=None, ssl=None, echo_queue=None):
         self._room_id: int = room_id
         if loop is None:
             self.loop = asyncio.get_event_loop()
@@ -35,13 +34,11 @@ class DM:
             self.loop = loop
         self.queue = queue
         self.ssl = ssl
+        self.echo_queue = echo_queue
 
     async def run(self):
         await self.__init_room__()
         await self.__get_dm_conf__()
-        print('name: {name}, room_id: {room_id}, true_room_id: {true_room_id}, uid: {uid}'.format(
-            name=self.name, room_id=self._room_id, true_room_id=self.room_id, uid=self.uid
-        ))
         self.loop.create_task(self.__api__check__())
         while True:
             for value in self.serve_list:
@@ -49,26 +46,22 @@ class DM:
                     await self.__ws__(serve=value['host'], port=value['wss_port'])
                 except:
                     pass
-                print('【%s】web socket断开' % self.name)
+                await self.__echo__(0, "与弹幕服务器断开连接")
             await self.__init_room__()
             await self.__get_dm_conf__()
 
     async def __api__check__(self):
-        live_status = False
         while True:
-            print('【%s】api check' % self.name)
-            status, room_id, live, uid = await get_live(room_id=self.room_id)
+            await self.__echo__(0, "API Check")
+            status, room_id, live, _ = await get_live(room_id=self._room_id)
             if status:
-                if live == 1 and live_status is False:  # 开播
-                    print('【%s】api check 开播' % self.name)
-                    live_status = True
-                    await self.queue.put({'live_status': 'LIVE', 'uid': self.uid, 'room_id': self._room_id,
-                                          'true_room': self.room_id, 'name': self.name})
-                elif live == 0 and live_status is True:  # 下播
-                    print('【%s】api check 下播' % self.name)
-                    live_status = False
-                    await self.queue.put({'live_status': 'PREPARING', 'uid': self.uid, 'room_id': self.room_id,
-                                          'true_room': self.room_id, 'name': self.name})
+                self.room_id = room_id
+                if live == 1:  # 开播
+                    await self.queue.put({"status": True, "uid": self.uid, "room_id": self._room_id, "true_room": self.room_id, "name": self.name})
+                    await self.__echo__(3, True)
+                elif live == 0:  # 下播
+                    await self.queue.put({"status": False, "uid": self.uid, "room_id": self._room_id, "true_room": self.room_id, "name": self.name})
+                    await self.__echo__(3, False)
             await asyncio.sleep(self.api_check_sleep)
 
     async def __ws__(self, serve, port):
@@ -86,31 +79,39 @@ class DM:
         offset = 0
         while offset < len(data):
             try:
-                header = self.HeaderTuple(*self.HEADER_STRUCT.unpack_from(data, offset))
+                header = self.HeaderTuple(
+                    *self.HEADER_STRUCT.unpack_from(data, offset))
             except struct.error:
                 break
             if header.operation == self.popularity:
                 popularity = int.from_bytes(data[offset + self.HEADER_STRUCT.size:
                                                  offset + self.HEADER_STRUCT.size + 4], 'big')
-                print('【%s】人气：%s' % (self.name, popularity))
+                await self.__echo__(0, "人气: %s" % popularity)
             elif header.operation == self.msg:
-                body = data[offset + self.HEADER_STRUCT.size: offset + header.pack_len]
+                body = data[offset +
+                            self.HEADER_STRUCT.size: offset + header.pack_len]
                 if header.ver == 2:
                     body = zlib.decompress(body)
                     await self.__ws_message__(body)
                 else:
                     body = json.loads(body.decode('utf-8'))
                     if body.get('cmd') == "LIVE":  # 开播
-                        print('【%s】web socket 开播' % self.name)
-                        await self.queue.put({'live_status': 'LIVE', 'uid': self.uid, 'room_id': self._room_id,
-                                              'true_room': self.room_id, 'name': self.name})
+                        # print('【%s】web socket 开播' % self.name)
+                        # await self.queue.put({'live_status': 'LIVE', 'uid': self.uid, 'room_id': self._room_id,
+                        #                       'true_room': self.room_id, 'name': self.name})
+                        await self.__echo__(3, True)
+                        await self.queue.put({"status": True, "uid": self.uid, "room_id": self._room_id, "true_room": self.room_id, "name": self.name})
                     elif body.get('cmd') == "PREPARING":  # 下播
-                        print('【%s】web socket 下播' % self.name)
-                        await self.queue.put({'live_status': 'PREPARING', 'uid': self.uid, 'room_id': self.room_id,
-                                              'true_room': self.room_id, 'name': self.name})
+                        # print('【%s】web socket 下播' % self.name)
+                        # await self.queue.put({'live_status': 'PREPARING', 'uid': self.uid, 'room_id': self.room_id,
+                        #                       'true_room': self.room_id, 'name': self.name})
+                        await self.queue.put({"status": False, "uid": self.uid, "room_id": self._room_id, "true_room": self.room_id, "name": self.name})
+                        await self.__echo__(3, False)
             elif header.operation == self.h_b:
-                print('【%s】心跳包' % self.name)
-                task = self.ws.send_bytes(self.__encode_pack__('[object Object]', self.heart_beat))
+                # print('【%s】心跳包' % self.name)
+                await self.__echo__(0, "心跳包")
+                task = self.ws.send_bytes(self.__encode_pack__(
+                    '[object Object]', self.heart_beat))
                 self.loop.create_task(task)
             offset += header.pack_len
 
@@ -118,7 +119,7 @@ class DM:
         timestamp = self.timestamp
         while timestamp == self.timestamp:
             try:
-                print('【%s】定时心跳包' % self.name)
+                await self.__echo__(0, "定时心跳包")
                 await self.ws.send_bytes(self.__encode_pack__('[object Object]', self.heart_beat))
             except:
                 break
@@ -149,26 +150,52 @@ class DM:
         return header + body
 
     async def __get_dm_conf__(self):
+        await self.__echo__(0, "获取弹幕服务器地址")
+
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.live.bilibili.com/room/v1/Danmu/getConf') as resp:
                 response = await resp.json()
                 if not isinstance(response.get('data'), dict):
-                    raise Exception('获取弹幕信息')
-                if not response['data'].get('token'):
-                    raise Exception('获取token失败')
-                if not response['data'].get('host_server_list'):
-                    raise Exception('获取弹幕地址失败')
-                self.token = response['data']['token']
-                self.serve_list = response['data']['host_server_list']
+                    await self.__echo__(0, "获取弹幕信息失败")
+                elif not response['data'].get('token'):
+                    await self.__echo__(0, "获取 token 失败")
+                elif not response['data'].get('host_server_list'):
+                    await self.__echo__(0, "获取弹幕地址失败")
+                else:
+                    self.token = response['data']['token']
+                    self.serve_list = response['data']['host_server_list']
+
+        await self.__echo__(0, "获取完成")
 
     async def __init_room__(self):
-        status, room_id, live_status, uid = await get_live(room_id=self._room_id)
+        await self.__echo__(0, "初始化直播间数据")
+
+        status, room_id, _, uid = await get_live(room_id=self._room_id)
         if status is False:
-            raise Exception('直播间初始化失败，无法获取直播间真实ID')
-        self.room_id = room_id
+            await self.__echo__(0, "无法获取直播间真实ID")
+
         self.uid = uid
-        status, name = await get_name(uid=uid, room_id=room_id)
-        self.name = name or '%s' % uid
+        status, name = await get_name(uid=uid, room_id=self._room_id)
+        if status is False:
+            await self.__echo__(0, "无法获取主播名字")
+
+        self.name = self.name or name or '%s' % uid
+        self.room_id = room_id
+
+        await self.__echo__(2, name)
+        await self.__echo__(1, room_id)
+        await self.__echo__(0, "初始化完成")
+
+    async def __echo__(self, a: int, b: str):
+        """
+        a: 
+            0: 日志显示
+            1: 房间真实ID
+            2: 主播名字
+            3: 直播状态
+        """
+        if self.echo_queue:
+            await self.echo_queue.put({"code": a, "data": b, "id": self._room_id})
 
 
 if __name__ == '__main__':
