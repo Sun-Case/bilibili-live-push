@@ -32,8 +32,10 @@ def get_roomid(text: str):
 
 
 if __name__ == "__main__":
-    get_roomid("""# 每行一个直播间ID
+    get_roomid(
+        """# 每行一个直播间ID
 
 1
 931774
-""")
+"""
+    )
