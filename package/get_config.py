@@ -2,16 +2,19 @@ config_bak = """{
     "Telegram": {
         "status": false,
         "bot_token": "",
-        "user_id": ""
+        "user_id": "",
+        "proxy": null
     },
     "ServerChan": {
         "status": false,
-        "token": ""
+        "token": "",
+        "proxy": null
     }
     ,
     "SSL": null,
     "LIVE": false,
-    "PREPARING": false
+    "PREPARING": false,
+    "PROXY": null
 }"""
 roomid_bak = """# 每行一个直播间ID
 

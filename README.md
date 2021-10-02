@@ -31,14 +31,20 @@
         1. 将 `status` 置 `true` 即可开启 Telegram推送
         2. `bot_token` 为 **你的 机器人Token**
         3. `user_id` 为 **你的 Telegram账号 ID**
-        4. 请确保运行此程序的计算机能访问 Telegram，否则无法发送消息
+        4. `proxy` 为 代理服务器地址，通过代理服务器连接 Telegram服务器
+            1. 格式为: `http://host:port`
+        5. 请确保运行此程序的计算机能访问 Telegram，否则无法发送消息
     2. `ServerChan` 字段用于配置 **Server酱** 推送
         1. 将 `status` 置 `true` 即可开启推送
         2. `token` 是 **你的 SendKey**, 在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey)
+        3. `proxy` 为 代理服务器地址，通过代理服务器连接 ServerChan服务器
+            1. 格式为 `http://host:port`
     2. `SSL` 字段用于处理 aiohttp 出现 SSL证书错误
         1. 如果出现错误，则需要 置为 `false`
     3. `LIVE` 字段用于开启开播提醒，如果 置为 `false`，则开播不提醒
     4. `PREPARING` 字段用于开启下播提醒，如果 置为 `false`，则下播不提醒
+    5. `PROXY` 为 全局代理服务器地址
+        1. 格式为 `http://host:port`
 5. 配置 **开播通知模板** 及 **下播通知模板**
     1. 关键字用 **花括号** 括起来, 然后 **左花括号** 前面加上美元符号`$`，在生成消息时会替换为相应数据
     2. 目前能用的关键字为

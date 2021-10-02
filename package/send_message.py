@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-from string import Template
 
 
 class Message:
@@ -18,7 +17,12 @@ class Message:
         data = {"chat_id": self.config["Telegram"]["user_id"], "text": content}
         async with aiohttp.ClientSession() as session:
             try:
-                await session.post(url, data=data, timeout=3)
+                await session.post(
+                    url,
+                    data=data,
+                    timeout=3,
+                    proxy=self.config["Telegram"]["proxy"] or self.config["PROXY"],
+                )
                 return True
             except:
                 return False
@@ -28,7 +32,12 @@ class Message:
         data = {"text": title, "desp": content}
         async with aiohttp.ClientSession() as session:
             try:
-                await session.post(url, data=data, timeout=3)
+                await session.post(
+                    url,
+                    data=data,
+                    timeout=3,
+                    proxy=self.config["ServerChan"]["proxy"] or self.config["PROXY"],
+                )
                 return True
             except:
                 return False
