@@ -41,6 +41,11 @@ def Init(roomid_file: str):
             try:
                 config = json.loads(rw.read())
                 print("配置文件读取成功")
+                # 合并并保存配置文件
+                config = {**json.loads(get_config.config_bak), **config}
+                rw.seek(0, SEEK_SET)
+                rw.truncate()
+                rw.write(json.dumps(config, ensure_ascii=False, indent=4))
             except Exception as e:
                 print("似乎无法读取配置文件的数据", e)
                 rw.seek(0, SEEK_SET)
