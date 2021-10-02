@@ -47,7 +47,9 @@ class Message:
                     if k == "Telegram" and v["status"]:
                         self.loop.create_task(self.Telegram(content, data["room_id"]))
                     if k == "ServerChan" and v["status"]:
-                        self.loop.create_task(self.ServerChan(content, data["room_id"]))
+                        self.loop.create_task(
+                            self.ServerChan("直播通知", content, data["room_id"])
+                        )
 
     def __content__(
         self, name: str, status: bool, room_id: int, true_room: int, uid: int
@@ -81,6 +83,27 @@ class Message:
                         {"code": 0, "data": "Telegram 发送失败 %s" % (a + 1), "id": room_id}
                     )
 
-    async def ServerChan(self, content: str, room_id):
-        # print(content)
+    async def ServerChan(self, title: str, content: str, room_id):
+        url = "https://sctapi.ftqq.com/%s.send" % self.config["ServerChan"]["token"]
+        data = {"text": title, "desp": content}
+        async with aiohttp.ClientSession() as session:
+            for a in range(0, 3):
+                try:
+                    await session.post(url, data=data, timeout=3)
+                    await self.echoQ.put(
+                        {
+                            "code": 0,
+                            "data": "ServerChan 发送成功 %s" % (a + 1),
+                            "id": room_id,
+                        }
+                    )
+                    break
+                except:
+                    await self.echoQ.put(
+                        {
+                            "code": 0,
+                            "data": "ServerChan 发送失败 %s" % (a + 1),
+                            "id": room_id,
+                        }
+                    )
         pass

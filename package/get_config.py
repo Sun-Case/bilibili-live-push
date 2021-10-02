@@ -4,6 +4,12 @@ config_bak = """{
         "bot_token": "",
         "user_id": ""
     },
+    {
+        "ServerChan": {
+            "status": false,
+            "token": ""
+        }
+    },
     "SSL": null,
     "LIVE": false,
     "PREPARING": false
