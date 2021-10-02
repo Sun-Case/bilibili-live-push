@@ -27,15 +27,22 @@ class DM:
     h_b = 8
     api_check_sleep = 60
 
-    def __init__(self, room_id: int, queue, loop=None, ssl=None, echo_queue=None):
+    def __init__(
+        self,
+        room_id: int,
+        id_: int,
+        loop=None,
+        ssl=None,
+        echo_queue=None,
+    ):
         self._room_id: int = room_id
         if loop is None:
             self.loop = asyncio.get_event_loop()
         else:
             self.loop = loop
-        self.queue = queue
         self.ssl = ssl
         self.echo_queue = echo_queue
+        self.id_ = id_
 
     async def run(self):
         await self.__init_room__()
@@ -58,27 +65,12 @@ class DM:
             if status:
                 self.room_id = room_id
                 if live == 1:  # 开播
-                    await self.queue.put(
-                        {
-                            "status": True,
-                            "uid": self.uid,
-                            "room_id": self._room_id,
-                            "true_room": self.room_id,
-                            "name": self.name,
-                        }
-                    )
-                    await self.__echo__(3, True)
+                    await self.__echo__(4, True)
                 elif live == 0:  # 下播
-                    await self.queue.put(
-                        {
-                            "status": False,
-                            "uid": self.uid,
-                            "room_id": self._room_id,
-                            "true_room": self.room_id,
-                            "name": self.name,
-                        }
-                    )
-                    await self.__echo__(3, False)
+                    await self.__echo__(4, False)
+                await self.__echo__(0, "API Check 成功")
+            else:
+                await self.__echo__(0, "API Check 失败")
             await asyncio.sleep(self.api_check_sleep)
 
     async def __ws__(self, serve, port):
@@ -120,35 +112,10 @@ class DM:
                 else:
                     body = json.loads(body.decode("utf-8"))
                     if body.get("cmd") == "LIVE":  # 开播
-                        # print('【%s】web socket 开播' % self.name)
-                        # await self.queue.put({'live_status': 'LIVE', 'uid': self.uid, 'room_id': self._room_id,
-                        #                       'true_room': self.room_id, 'name': self.name})
-                        await self.__echo__(3, True)
-                        await self.queue.put(
-                            {
-                                "status": True,
-                                "uid": self.uid,
-                                "room_id": self._room_id,
-                                "true_room": self.room_id,
-                                "name": self.name,
-                            }
-                        )
+                        await self.__echo__(4, True)
                     elif body.get("cmd") == "PREPARING":  # 下播
-                        # print('【%s】web socket 下播' % self.name)
-                        # await self.queue.put({'live_status': 'PREPARING', 'uid': self.uid, 'room_id': self.room_id,
-                        #                       'true_room': self.room_id, 'name': self.name})
-                        await self.queue.put(
-                            {
-                                "status": False,
-                                "uid": self.uid,
-                                "room_id": self._room_id,
-                                "true_room": self.room_id,
-                                "name": self.name,
-                            }
-                        )
-                        await self.__echo__(3, False)
+                        await self.__echo__(4, False)
             elif header.operation == self.h_b:
-                # print('【%s】心跳包' % self.name)
                 await self.__echo__(0, "心跳包")
                 task = self.ws.send_bytes(
                     self.__encode_pack__("[object Object]", self.heart_beat)
@@ -225,26 +192,40 @@ class DM:
             await self.__echo__(0, "无法获取主播名字")
 
         self.name = self.name or name or "%s" % uid
+        self.name = self.name.replace("\t", "").replace("\r", "")
         self.room_id = room_id
 
-        await self.__echo__(2, name)
-        await self.__echo__(1, room_id)
+        await self.__echo__(3, self.name)
+        await self.__echo__(2, str(self.room_id))
+        await self.__echo__(1, str(self._room_id))
         await self.__echo__(0, "初始化完成")
 
-    async def __echo__(self, a: int, b: str):
+    async def __echo__(self, type_: int, data: str):
         """
-        a:
+        type_:
             0: 日志显示
-            1: 房间真实ID
-            2: 主播名字
-            3: 直播状态
+            1: 直播间ID
+            2: 直播间真实ID
+            3: 主播名字
+            4: 直播状态
         """
         if self.echo_queue:
-            await self.echo_queue.put({"code": a, "data": b, "id": self._room_id})
+            await self.echo_queue.put(
+                {
+                    "code": type_,
+                    "data": data,
+                    "room id": self._room_id,
+                    "true id": self.room_id,
+                    "id": self.id_,
+                    "name": self.name,
+                    "uid": self.uid,
+                    "time": time.time(),
+                }
+            )
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     q = asyncio.Queue()
-    tasks = [asyncio.ensure_future(DM(room_id=931774, queue=q, loop=loop).run())]
+    tasks = [asyncio.ensure_future(DM(room_id=931774, loop=loop).run())]
     loop.run_until_complete(asyncio.wait(tasks))

@@ -1,107 +1,97 @@
 import asyncio
+from sys import flags
 import time
+from typing import *
 
 
-class ECHO:
-    q: asyncio.Queue
-    data: dict
+class EchoFormat:
+    th: List[str] = []
+    td: List[List[str]] = []
+    first_echo: bool = True
+    last_update: float = time.time()
 
-    def __init__(self, q: asyncio.Queue, loop) -> None:
-        self.q = q
-        self.data = {}
-        self.loop = loop
+    def __init__(self) -> None:
+        pass
 
-    async def run(self):
-        self.loop.create_task(self.show())
+    def init_th(self, *arg) -> None:
+        self.th.clear()
+        for i, x in enumerate(arg):  # type: str
+            if isinstance(x, str) is True:
+                self.th.append(x)
+            else:
+                print("非str类型", i, ":", x)
 
-        while True:
-            data = await self.q.get()
-            if data["id"] not in self.data:
-                self.data[data["id"]] = {
-                    "msg": "",
-                    "room_id": "",
-                    "name": "",
-                    "status": "",
-                }
+    def del_th(self) -> None:
+        self.th.clear()
 
-            if data["code"] == 0:
-                self.data[data["id"]]["msg"] = (
-                    time.strftime("%m-%d %H:%M:%S", time.localtime())
-                    + " "
-                    + data["data"]
+    def create_td(self) -> Tuple[int, list]:
+        self.td.append([])
+        while len(self.td[len(self.td) - 1]) < len(self.th):
+            self.td[len(self.td) - 1].append("")
+        return len(self.td) - 1, self.td[len(self.td) - 1]
+
+    def update_td(self, index: int, *arg):
+        for i, x in enumerate(arg):  # type: int, str
+            if i < len(self.th):
+                self.td[index][i] = x
+        self.last_update = time.time()
+
+    def update_element(self, row: int, column: int, arg: str):
+        # 横排数列
+        # row: 排
+        # column: 列
+        self.td[row][column] = arg
+        self.last_update = time.time()
+
+    def str_width(self) -> List[int]:
+        str_len = [str_width(v) + 3 for v in self.th]
+        for v in self.td:  # type: int, List[str]
+            for i, x in enumerate(v):
+                if i >= len(str_len):
+                    break
+                str_len[i] = (
+                    str_len[i] if str_len[i] > str_width(x) + 3 else str_width(x) + 3
                 )
-            elif data["code"] == 1:
-                self.data[data["id"]]["room_id"] = "%s" % data["data"]
-            elif data["code"] == 2:
-                self.data[data["id"]]["name"] = data["data"]
-            elif data["code"] == 3:
-                self.data[data["id"]]["status"] = "直播" if data["data"] else "下播"
+        return str_len
 
-    async def show(self):
+    def echo(self):
+        if not self.first_echo:
+            print("\033[%sA" % (len(self.td) + 2))
+        else:
+            self.first_echo = False
+        str_len = self.str_width()
+        # th
+        print(build_format(str_len, self.th) % tuple(self.th))
+        # td
+        for v in self.td:
+            print(build_format(str_len, v) % tuple(v))
+
+    async def loop(self):
+        last_update: float = 0
         while True:
-            data = [["#", "直播间ID", "真实ID", "主播名", "开播/下播", "实时状态"]]
-
-            count = 0
-            for k, v in self.data.items():
-                count += 1
-                data.append(
-                    [
-                        "%s" % count,
-                        "%s" % k,
-                        v.get("room_id", ""),
-                        v.get("name", ""),
-                        v.get("status", ""),
-                        v.get("msg", ""),
-                    ]
-                )
-
-            echo(data)
-            await asyncio.sleep(1)
-            print("\033[%sA" % (count + 2))
+            if last_update >= self.last_update:
+                await asyncio.sleep(1)
+                continue
+            self.echo()
+            last_update = self.last_update
 
 
-def echoConfig(config: dict):
-    l = [["通知方式", "状态"]]
-    for k, v in config.items():
-        if isinstance(v, dict) is False:
-            continue
-        if "status" not in v:
-            continue
-        l.append([k, "开启" if v["status"] else "关闭"])
-    echo(l)
+def build_format(str_len: List[int], str_list: List[str]) -> str:
+    str_format = ""
+    for i, v in enumerate(str_list):  # type: str
+        str_format += "%-{}.{}s".format(
+            str_len[i] - alpha_len(v), str_len[i] - alpha_len(v)
+        )
+    str_format += "\033[K"
+    return str_format
 
 
-def echo(table: list):
-    # 横行竖列
-    hor = len(table)  # 列
-    row = 0  # 行
-    maxHor = []  # 每列最大占位
-    doubleChar = []  # 汉字数量
-
-    if hor == 0:
-        return
-    for i in table:
-        row = len(i) if row < len(i) else row
-        for k, v in enumerate(i):
-            while len(maxHor) < k + 1:
-                maxHor.append(0)
-                doubleChar.append(0)
-            maxHor[k] = (
-                (len(v) + alpha_len(v))
-                if maxHor[k] < (len(v) + alpha_len(v))
-                else maxHor[k]
-            )
-            doubleChar[k] = (
-                alpha_len(v) if doubleChar[k] < alpha_len(v) else doubleChar[k]
-            )
-    for i in table:
-        ctrl = " "
-        for j, k in enumerate(i):
-            ctrl += "%-{}.{}s".format(
-                maxHor[j] + 2 - alpha_len(k), maxHor[j] + 2 - alpha_len(k)
-            )
-        ctrl += "\033[K"
-        print(ctrl % tuple(i))
+def str_width(text: str) -> int:
+    count = len(text)
+    for i in text:
+        if "\u4e00" <= i <= "\u9fff":
+            count += 1
+    return count
 
 
 def alpha_len(text: str) -> int:
@@ -113,4 +103,14 @@ def alpha_len(text: str) -> int:
 
 
 if __name__ == "__main__":
-    echo([["123", "345"], ["4567", "1", "666"]])
+    ef = EchoFormat()
+    ef.init_th("#", "直播间ID", "真实ID", "主播名", "开播/下播", "实时状态")
+    i, v = ef.create_td()
+    v.append("1")
+    v.append("2")
+    v.append("3")
+    v.append("4")
+    v.append("5")
+    v.append("6")
+
+    ef.echo()

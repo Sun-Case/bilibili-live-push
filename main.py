@@ -1,5 +1,6 @@
 import asyncio
 from io import SEEK_SET
+from string import Template
 import time
 from package import dm, send_message, get_config, echo
 import os
@@ -15,10 +16,8 @@ tasks = []
 roomid_list = []
 config = {}
 
-live_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 开播啦"
-preparing_template = (
-    "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 下播啦"
-)
+live_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 开播啦 时间: ${YYYY}-${mm}-${dd} ${HH}:${MM}:${SS}"
+preparing_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 下播啦 开播啦 时间: ${YYYY}-${mm}-${dd} ${HH}:${MM}:${SS}"
 
 
 def Init(roomid_file: str):
@@ -78,41 +77,150 @@ def Init(roomid_file: str):
     return status
 
 
+# 所有直播间数据统一处理
+class Process:
+    def __init__(self) -> None:
+        self.loop = asyncio.get_event_loop()
+        self.echoQ = asyncio.Queue()
+        self.echo = echo.EchoFormat()
+        self.send_message = send_message.Message(self.loop, config)
+        self.live_template = Template(live_template)
+        self.preparing_template = Template(preparing_template)
+        self.live_status = {}
+        self.tasks = []
+        self.echo.init_th("#", "直播间ID", "直播间真实ID", "主播名", "开播/下播", "实时状态")
+
+    def create_tasks(self):
+        roomid_list.sort()
+        for i in roomid_list:  # type: int
+            # 创建 td
+            id_, _ = self.echo.create_td()
+            # 创建 dm
+            task = dm.DM(i, id_, self.loop, config.get("SSL", None), self.echoQ)
+            self.echo.update_element(id_, 0, str(id_ + 1))
+            self.tasks.append(task.run())
+            self.live_status[id_] = False
+        self.tasks.append(self.echo.loop())
+
+    async def loop_echo(self):
+        while True:
+            data: dict = await self.echoQ.get()
+            try:
+                if data["code"] == 0:  # 日志显示
+                    self.echo.update_element(
+                        data["id"],
+                        5,
+                        time.strftime("%H:%M:%S", time.localtime(data["time"]))
+                        + "  "
+                        + data["data"],
+                    )
+                elif data["code"] == 1:  # 直播间ID
+                    self.echo.update_element(data["id"], 1, data["data"])
+                elif data["code"] == 2:  # 直播间真实ID
+                    self.echo.update_element(data["id"], 2, data["data"])
+                elif data["code"] == 3:  # 主播名
+                    self.echo.update_element(data["id"], 3, data["data"])
+                elif data["code"] == 4:  # 直播状态
+                    self.echo.update_element(
+                        data["id"], 4, "直播" if data["data"] else "下播"
+                    )
+                    if (
+                        self.live_status[data["id"]] is False and data["data"] is True
+                    ) or (
+                        self.live_status[data["id"]] is True and data["data"] is False
+                    ):
+                        # 开播 or 下播
+                        self.live_status[data["id"]] = data["data"]
+                        self.loop.create_task(self.send_msg(data))
+            except Exception as e:
+                print(e)
+
+    async def send_msg(self, data: dict):
+        # 生成 年月日时分秒
+        YYYY = time.strftime("%Y", time.localtime(data["time"]))
+        mm = time.strftime("%m", time.localtime(data["time"]))
+        dd = time.strftime("%d", time.localtime(data["time"]))
+        HH = time.strftime("%H", time.localtime(data["time"]))
+        MM = time.strftime("%M", time.localtime(data["time"]))
+        SS = time.strftime("%S", time.localtime(data["time"]))
+        # 根据模板生成内容
+        if data["data"]:
+            content = self.live_template.safe_substitute(
+                name=data["name"],
+                room_id=data["room id"],
+                true_room=data["true id"],
+                uid=data["uid"],
+                YYYY=YYYY,
+                mm=mm,
+                dd=dd,
+                HH=HH,
+                MM=MM,
+                SS=SS,
+            )
+        else:
+            content = self.preparing_template.safe_substitute(
+                name=data["name"],
+                room_id=data["room id"],
+                true_room=data["true id"],
+                uid=data["uid"],
+                YYYY=YYYY,
+                mm=mm,
+                dd=dd,
+                HH=HH,
+                MM=MM,
+                SS=SS,
+            )
+
+        # 推送消息
+        if (
+            "Telegram" in config
+            and "status" in config["Telegram"]
+            and config["Telegram"]["status"]
+        ):
+            self.loop.create_task(self.__telegram__(data, content))
+        if (
+            "ServerChan" in config
+            and "status" in config["ServerChan"]
+            and config["ServerChan"]["status"]
+        ):
+            self.loop.create_task(self.__server_chan__(data, content))
+
+    async def __telegram__(self, data: dict, content: str):
+        for i in range(3):
+            rt = await self.send_message.Telegram(content)
+            data["code"] = 0
+            data["time"] = time.time()
+            if rt:
+                data["data"] = "Telegram 推送成功"
+                await self.echoQ.put(data)
+                break
+            else:
+                data["data"] = "Telegram 第 %s 次推送失败" % (i + 1)
+                await self.echoQ.put(data)
+
+    async def __server_chan__(self, data: dict, content: str):
+        for i in range(3):
+            rt = await self.send_message.ServerChan("直播通知", content)
+            data["code"] = 0
+            data["time"] = time.time()
+            if rt:
+                data["data"] = "Server Chan 推送成功"
+                await self.echoQ.put(data)
+                break
+            else:
+                data["data"] = "Server Chan 第 %s 次推送失败" % (i + 1)
+                await self.echoQ.put(data)
+
+    def run(self):
+        self.create_tasks()
+        self.tasks.append(self.loop_echo())
+        self.tasks.append(self.echo.loop())
+        self.loop.run_until_complete(asyncio.wait(self.tasks))
+
+
 if __name__ == "__main__":
     if Init(roomid_file) is False:
         exit(0)
 
-    print("")
-    echo.echoConfig(config)
-
-    print("")
-    echo.echo(
-        [["#", "直播间ID"]]
-        + [["%s" % (i + 1), "%s" % v] for i, v in enumerate(roomid_list)]
-    )
-    print("")
-
-    print("添加任务")
-
-    loop = asyncio.get_event_loop()
-    q = asyncio.Queue()
-    echoQ = asyncio.Queue()
-
-    for i in roomid_list:
-        tasks.append(dm.DM(i, q, loop, config.get("SSL", None), echoQ).run())
-
-    for i in range(2, -1, -1):
-        print("\r添加完成，即将启动 %s" % i, end="", flush=True)
-        time.sleep(1)
-    print("\n")
-
-    # 输出由 ECHO 接管
-    tasks.append(asyncio.ensure_future(echo.ECHO(echoQ, loop).run()))
-    tasks.append(
-        asyncio.ensure_future(
-            send_message.Message(
-                q, loop, config, roomid_list, live_template, preparing_template, echoQ
-            ).run()
-        )
-    )
-    loop.run_until_complete(asyncio.wait(tasks))
+    process = Process()
+    process.run()
