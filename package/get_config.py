@@ -8,9 +8,19 @@ config_bak = """{
     "ServerChan": {
         "status": false,
         "token": "",
+        "summary": "直播通知",
         "proxy": null
-    }
-    ,
+    },
+    "WxPusher": {
+        "status": false,
+        "appToken": "",
+        "summary": "直播通知",
+        "contentType": 1,
+        "topicIds": [],
+        "uids": [],
+        "url": "",
+        "proxy": null
+    },
     "SSL": null,
     "LIVE": false,
     "PREPARING": false,

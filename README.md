@@ -33,20 +33,34 @@
 ### 配置 `config.json`
 
 #### 配置 `Telegram` 推送
-> `Telegram` 字段用于配置 **Telegram** 推送
-1. 将 `status` 置 `true` 即可开启 Telegram推送
-2. `bot_token` 为 **你的 机器人Token**
-3. `user_id` 为 **你的 Telegram账号 ID**
-4. `proxy` 为 代理服务器地址，通过代理服务器连接 Telegram服务器
-    1. 格式为: `http://host:port`
-5. 请确保运行此程序的计算机能访问 Telegram，否则无法发送消息
+> `Telegram` 字段用于配置 **Telegram** 推送\
+> 请确保运行此程序的计算机能访问 Telegram 并 配置proxy字段 ，否则无法发送消息
+
+| 字段 | 功能 |
+| :-: | :-: |
+| `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
+| `bot_token` | 字符串<br />你的机器人Token |
+| `user_id` | 字符串<br />你的Telegram账号ID |
+| `proxy` | 字符串<br />代理服务器地址, 通过代理服务器连接 Telegram服务器<br />格式: `http://host:proxy` |
 
 #### 配置 `ServerChan` 推送
 > `ServerChan` 字段用于配置 **Server酱** 推送
-1. 将 `status` 置 `true` 即可开启推送
-2. `token` 是 **你的 SendKey**, 在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey)
-3. `proxy` 为 代理服务器地址，通过代理服务器连接 ServerChan服务器
-    1. 格式为 `http://host:port`
+
+| 字段 | 功能 |
+| :-: | :-: |
+| `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
+| `token` | 字符串<br />你的 SendKey<br />在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey) |
+| `summary` | 字符串<br />摘要，**必须有且不能为空字符串** |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 ServerChan服务器<br />格式: `http://host:port` |
+
+#### 配置 `WxPusher` 推送
+> `WxPusher` 字段用于配置 **WxPusher** 推送
+
+| 字段 | 功能 |
+| :-: | :-: |
+| `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
+| `appToken`<br />`summary`<br />`contentType`<br />`topicIds`<br />`uids`<br />`url` | 均为 **WxPusher** 字段<br />请看 [WxPusher 文档](https://wxpusher.zjiecode.com/docs/#/?id=%e5%8f%91%e9%80%81%e6%b6%88%e6%81%af-1) |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 WxPusher服务器<br />格式: `http://host:port` |
 
 #### 解决SSL证书错误
 > `SSL` 字段用于处理 aiohttp 出现 SSL证书错误

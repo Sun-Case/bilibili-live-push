@@ -137,7 +137,10 @@ class Process:
                     ):
                         # 开播 or 下播
                         self.live_status[data["id"]] = data["data"]
-                        self.loop.create_task(self.send_msg(data))
+                        if (data["data"] is True and config["LIVE"]) or (
+                            data["data"] is False and config["PREPARING"]
+                        ):
+                            self.loop.create_task(self.send_msg(data))
             except Exception as e:
                 print(e)
 
@@ -190,6 +193,8 @@ class Process:
             and config["ServerChan"]["status"]
         ):
             self.loop.create_task(self.__server_chan__(data, content))
+        if config["WxPusher"]["status"]:
+            self.loop.create_task(self.__wx_pusher__(data, content))
 
     async def __telegram__(self, data: dict, content: str):
         for i in range(3):
@@ -206,7 +211,9 @@ class Process:
 
     async def __server_chan__(self, data: dict, content: str):
         for i in range(3):
-            rt = await self.send_message.ServerChan("直播通知", content)
+            rt = await self.send_message.ServerChan(
+                config["ServerChan"]["summary"], content
+            )
             data["code"] = 0
             data["time"] = time.time()
             if rt:
@@ -215,6 +222,21 @@ class Process:
                 break
             else:
                 data["data"] = "Server Chan 第 %s 次推送失败" % (i + 1)
+                await self.echoQ.put(data)
+
+    async def __wx_pusher__(self, data: dict, content: str):
+        for i in range(3):
+            rt = await self.send_message.WxPusher(
+                config["WxPusher"]["summary"], content
+            )
+            data["code"] = 0
+            data["time"] = time.time()
+            if rt:
+                data["data"] = "WxPusher 推送成功"
+                await self.echoQ.put(data)
+                break
+            else:
+                data["data"] = "WxPusher 第 %s 次推送失败" % (i + 1)
                 await self.echoQ.put(data)
 
     def run(self):
