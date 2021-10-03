@@ -14,7 +14,7 @@ config_bak = """{
     "WxPusher": {
         "status": false,
         "appToken": "",
-        "summary": "直播通知",
+        "summary": "",
         "contentType": 1,
         "topicIds": [],
         "uids": [],
