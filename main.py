@@ -17,7 +17,7 @@ roomid_list = []
 config = {}
 
 live_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 开播啦 时间: ${YYYY}-${mm}-${dd} ${HH}:${MM}:${SS}"
-preparing_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 下播啦 开播啦 时间: ${YYYY}-${mm}-${dd} ${HH}:${MM}:${SS}"
+preparing_template = "【${name}】 room_id: ${room_id}, true_id: ${true_room}, uid: ${uid} 下播啦 时间: ${YYYY}-${mm}-${dd} ${HH}:${MM}:${SS}"
 
 
 def Init(roomid_file: str):
