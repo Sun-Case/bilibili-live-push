@@ -72,3 +72,23 @@ class Message:
                 return True
             except:
                 return False
+
+    async def PushPlus(self, title: str, content: str) -> bool:
+        url = "http://www.pushplus.plus/send"
+        data = {"token": self.config["PushPlus"]["token"], "content": content}
+        if title:
+            data["title"] = title
+        for v in ["title", "template", "topic", "channel", "webhook", "callbackUrl"]:
+            if self.config["PushPlus"].get(v, ""):
+                data[v] = self.config["PushPlus"][v]
+        async with aiohttp.ClientSession() as session:
+            try:
+                await session.get(
+                    url,
+                    json=data,
+                    timeout=3,
+                    proxy=self.config["PushPlus"]["proxy"] or self.config["PROXY"],
+                )
+                return True
+            except:
+                return False

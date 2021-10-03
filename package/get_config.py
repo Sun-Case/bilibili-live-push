@@ -21,6 +21,17 @@ config_bak = """{
         "url": "",
         "proxy": null
     },
+    "PushPlus": {
+        "status": false,
+        "token": "",
+        "title": "",
+        "template": "html",
+        "topic": "",
+        "channel": "",
+        "webhook": "",
+        "callbackUrl": "",
+        "proxy": ""
+    },
     "SSL": null,
     "LIVE": false,
     "PREPARING": false,

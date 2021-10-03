@@ -62,6 +62,16 @@
 | `appToken`<br />`summary`<br />`contentType`<br />`topicIds`<br />`uids`<br />`url` | 均为 **WxPusher** 字段<br />请看 [WxPusher 文档](https://wxpusher.zjiecode.com/docs/#/?id=%e5%8f%91%e9%80%81%e6%b6%88%e6%81%af-1) |
 | `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 WxPusher服务器<br />格式: `http://host:port` |
 
+#### 配置 `PushPlus` 推送
+> `PushPlus` 字段用于配置 **PushPlus** 推送
+
+| 字段 | 功能 |
+| :-: | :-: |
+| `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
+| `token` | 字符串<br />你的Token |
+| `title`<br />`template`<br />`topic`<br />`channel`<br />`webhook`<br />`callbackUrl` | 均为 **PushPlus** 字段<br />请看 [PushPlus 接口文档](http://www.pushplus.plus/doc/guide/api.html) |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 PushPlus服务器<br />格式: `http://host:port` |
+
 #### 解决SSL证书错误
 > `SSL` 字段用于处理 aiohttp 出现 SSL证书错误
 
