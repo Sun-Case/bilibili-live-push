@@ -8,6 +8,7 @@ config_bak = """{
     "ServerChan": {
         "status": false,
         "token": "",
+        "use_content_as_summary": false,
         "summary": "直播通知",
         "proxy": null
     },

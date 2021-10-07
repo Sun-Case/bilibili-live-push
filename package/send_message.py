@@ -29,7 +29,10 @@ class Message:
 
     async def ServerChan(self, summary: str, content: str) -> bool:
         url = "https://sctapi.ftqq.com/%s.send" % self.config["ServerChan"]["token"]
-        data = {"text": summary, "desp": content}
+        if self.config["ServerChan"]["use_content_as_summary"]:
+          data = {"text": content, "desp": content}
+        else:
+          data = {"text": summary, "desp": content}
         async with aiohttp.ClientSession() as session:
             try:
                 await session.post(
