@@ -38,16 +38,10 @@ def Init(roomid_file: str):
     if os.path.exists(config_file):
         with open(config_file, "r+", encoding="utf-8") as rw:
             try:
-                config = json.loads(rw.read())
+                config = json.loads(get_config.config_bak)
                 print("配置文件读取成功")
                 # 合并并保存配置文件
-                config = {**json.loads(get_config.config_bak), **config}
-                for k in config.keys():  # 默认方法无法深度拷贝，当然配置文件比较简单，就不写一个深拷贝函数了
-                    if isinstance(config[k], dict):
-                        config[k] = {
-                            **json.loads(get_config.config_bak)[k],
-                            **config[k],
-                        }
+                get_config.merge_dict(json.loads(rw.read()), config)
                 rw.seek(0, SEEK_SET)
                 rw.truncate()
                 rw.write(json.dumps(config, ensure_ascii=False, indent=4))
