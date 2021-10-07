@@ -49,6 +49,7 @@
 | :-: | :-: |
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `token` | 字符串<br />你的 SendKey<br />在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey) |
+| `use_content_as_summary` | 布尔型<br />是否将下面的 `summary`项作为摘要内容<br />`false`则将内容作为摘要 |
 | `summary` | 字符串<br />摘要，**必须有且不能为空字符串** |
 | `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 ServerChan服务器<br />格式: `http://host:port` |
 
