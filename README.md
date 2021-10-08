@@ -41,7 +41,7 @@
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `bot_token` | 字符串<br />你的机器人Token |
 | `user_id` | 字符串<br />你的Telegram账号ID |
-| `proxy` | 字符串<br />代理服务器地址, 通过代理服务器连接 Telegram服务器<br />格式: `http://host:proxy` |
+| `proxy` | 字符串<br />代理服务器地址, 通过代理服务器连接 Telegram服务器<br />格式: `http://host:port` |
 
 #### 配置 `ServerChan` 推送
 > `ServerChan` 字段用于配置 **Server酱** 推送
