@@ -1,13 +1,15 @@
 import aiohttp
 import asyncio
+import logging
 
 
 class Message:
     loop: asyncio.AbstractEventLoop
 
-    def __init__(self, loop, config: dict) -> None:
+    def __init__(self, loop, config: dict, logger: logging.Logger) -> None:
         self.loop = loop
         self.config = config
+        self.logger = logger
 
     async def Telegram(self, content: str) -> bool:
         url = (
@@ -15,17 +17,18 @@ class Message:
             % self.config["Telegram"]["bot_token"]
         )
         data = {"chat_id": self.config["Telegram"]["user_id"], "text": content}
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 await session.post(
                     url,
                     data=data,
                     timeout=3,
                     proxy=self.config["Telegram"]["proxy"] or self.config["PROXY"],
                 )
-                return True
-            except:
-                return False
+            return True
+        except Exception:
+            self.logger.exception("推送失败")
+            return False
 
     async def ServerChan(self, summary: str, content: str) -> bool:
         url = "https://sctapi.ftqq.com/%s.send" % self.config["ServerChan"]["token"]
@@ -33,17 +36,18 @@ class Message:
             data = {"text": content, "desp": content}
         else:
             data = {"text": summary, "desp": content}
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 await session.post(
                     url,
                     data=data,
                     timeout=3,
                     proxy=self.config["ServerChan"]["proxy"] or self.config["PROXY"],
                 )
-                return True
-            except:
-                return False
+            return True
+        except Exception:
+            self.logger.exception("推送失败")
+            return False
 
     async def WxPusher(self, summary: str, content: str) -> bool:
         url = "http://wxpusher.zjiecode.com/api/send/message"
@@ -64,17 +68,18 @@ class Message:
         }
         if summary == "":
             del data["summary"]
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 await session.post(
                     url,
                     json=data,
                     timeout=3,
                     proxy=self.config["WxPusher"]["proxy"] or self.config["PROXY"],
                 )
-                return True
-            except:
-                return False
+            return True
+        except Exception:
+            self.logger.exception("推送失败")
+            return False
 
     async def PushPlus(self, title: str, content: str) -> bool:
         url = "http://www.pushplus.plus/send"
@@ -84,17 +89,18 @@ class Message:
         for v in ["title", "template", "topic", "channel", "webhook", "callbackUrl"]:
             if self.config["PushPlus"].get(v, ""):
                 data[v] = self.config["PushPlus"][v]
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 await session.get(
                     url,
                     json=data,
                     timeout=3,
                     proxy=self.config["PushPlus"]["proxy"] or self.config["PROXY"],
                 )
-                return True
-            except:
-                return False
+            return True
+        except Exception:
+            self.logger.exception("推送失败")
+            return False
 
     async def Qmsg(self, content: str) -> bool:
         url = "https://qmsg.zendee.cn/send/" + self.config["Qmsg"]["key"]
@@ -102,8 +108,8 @@ class Message:
         if self.config["Qmsg"]["qq"] and len(self.config["Qmsg"]["qq"]) != 0:
             data["qq"] = self.config["Qmsg"]["qq"]
 
-        async with aiohttp.ClientSession() as session:
-            try:
+        try:
+            async with aiohttp.ClientSession() as session:
                 await session.post(
                     url,
                     data=data,
@@ -111,5 +117,6 @@ class Message:
                     proxy=self.config["Qmsg"]["proxy"] or self.config["PROXY"],
                 )
                 return True
-            except Exception as e:
-                return False
+        except Exception as e:
+            self.logger.exception("推送失败")
+            return False

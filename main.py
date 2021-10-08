@@ -5,6 +5,16 @@ import time
 from package import dm, send_message, get_config, echo
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.WARN)
+handler = logging.FileHandler("run.log")
+formatter = logging.Formatter(
+    "%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(lineno)d - %(message)s"
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 roomid_file = "直播间ID.txt"  # 存放要提醒的直播间ID的文件
@@ -46,6 +56,7 @@ def Init(roomid_file: str):
                 rw.truncate()
                 rw.write(json.dumps(config, ensure_ascii=False, indent=4))
             except Exception as e:
+                logger.exception("读取配置文件失败")
                 print("似乎无法读取配置文件的数据", e)
                 rw.seek(0, SEEK_SET)
                 rw.truncate()
@@ -79,11 +90,12 @@ def Init(roomid_file: str):
 
 # 所有直播间数据统一处理
 class Process:
-    def __init__(self) -> None:
+    def __init__(self, logger) -> None:
+        self.logger: logging.Logger = logger
         self.loop = asyncio.get_event_loop()
         self.echoQ = asyncio.Queue()
         self.echo = echo.EchoFormat()
-        self.send_message = send_message.Message(self.loop, config)
+        self.send_message = send_message.Message(self.loop, config, logger)
         self.live_template = Template(live_template)
         self.preparing_template = Template(preparing_template)
         self.live_status = {}
@@ -135,8 +147,8 @@ class Process:
                             data["data"] is False and config["PREPARING"]
                         ):
                             self.loop.create_task(self.send_msg(data))
-            except Exception as e:
-                print(e)
+            except Exception:
+                self.logger.exception("日志显示错误")
 
     async def send_msg(self, data: dict):
         # 生成 年月日时分秒
@@ -274,5 +286,5 @@ if __name__ == "__main__":
     if Init(roomid_file) is False:
         exit(0)
 
-    process = Process()
+    process = Process(logger)
     process.run()
