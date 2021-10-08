@@ -30,9 +30,9 @@ class Message:
     async def ServerChan(self, summary: str, content: str) -> bool:
         url = "https://sctapi.ftqq.com/%s.send" % self.config["ServerChan"]["token"]
         if self.config["ServerChan"]["use_content_as_summary"]:
-          data = {"text": content, "desp": content}
+            data = {"text": content, "desp": content}
         else:
-          data = {"text": summary, "desp": content}
+            data = {"text": summary, "desp": content}
         async with aiohttp.ClientSession() as session:
             try:
                 await session.post(
@@ -94,4 +94,22 @@ class Message:
                 )
                 return True
             except:
+                return False
+
+    async def Qmsg(self, content: str) -> bool:
+        url = "https://qmsg.zendee.cn/send/" + self.config["Qmsg"]["key"]
+        data = {"msg": content}
+        if self.config["Qmsg"]["qq"] and len(self.config["Qmsg"]["qq"]) != 0:
+            data["qq"] = self.config["Qmsg"]["qq"]
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                await session.post(
+                    url,
+                    data=data,
+                    timeout=3,
+                    proxy=self.config["Qmsg"]["proxy"] or self.config["PROXY"],
+                )
+                return True
+            except Exception as e:
                 return False

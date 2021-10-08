@@ -72,6 +72,16 @@
 | `title`<br />`template`<br />`topic`<br />`channel`<br />`webhook`<br />`callbackUrl` | 均为 **PushPlus** 字段<br />请看 [PushPlus 接口文档](http://www.pushplus.plus/doc/guide/api.html) |
 | `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 PushPlus服务器<br />格式: `http://host:port` |
 
+#### 配置 `Qmsg` 推送【私聊推送，非群发推送】
+> `Qmsg` 字段用于配置 **Qmsg** 推送
+
+| 字段 | 功能 |
+| :-: | :-: |
+| `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
+| `key` | 字符串<br />你的key |
+| `qq` | 列表类型, 元素为字符串<br />存放你接收推送的QQ号 |
+| `proxy` | 字符串<br />代理服务器，通过代理服务器连接 Qmsg服务器 |
+
 #### 解决SSL证书错误
 > `SSL` 字段用于处理 aiohttp 出现 SSL证书错误
 

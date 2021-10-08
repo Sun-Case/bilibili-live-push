@@ -191,6 +191,8 @@ class Process:
             self.loop.create_task(self.__wx_pusher__(data, content))
         if config["PushPlus"]["status"]:
             self.loop.create_task(self.__push_plus__(data, content))
+        if config["Qmsg"]["status"]:
+            self.loop.create_task(self.__qmsg__(data, content))
 
     async def __telegram__(self, data: dict, content: str):
         for i in range(3):
@@ -246,6 +248,19 @@ class Process:
                 break
             else:
                 data["data"] = "PushPlus 第 %s 次推送失败" % (i + 1)
+                await self.echoQ.put(data)
+
+    async def __qmsg__(self, data: dict, content: str):
+        for i in range(3):
+            rt = await self.send_message.Qmsg(content)
+            data["code"] = 0
+            data["time"] = time.time()
+            if rt:
+                data["data"] = "Qmsg 推送成功"
+                await self.echoQ.put(data)
+                break
+            else:
+                data["data"] = "Qmsg 第 %s 次推送失败" % (i + 1)
                 await self.echoQ.put(data)
 
     def run(self):

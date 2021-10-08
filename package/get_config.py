@@ -36,6 +36,12 @@ config_bak = """{
         "callbackUrl": "",
         "proxy": ""
     },
+    "Qmsg": {
+        "status": false,
+        "key": "",
+        "qq": [],
+        "proxy": ""
+    },
     "SSL": null,
     "LIVE": false,
     "PREPARING": false,
