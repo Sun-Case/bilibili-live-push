@@ -132,3 +132,4 @@ config.json
 直播间ID.txt
 开播通知模板.txt
 下播通知模板.txt
+*.bak

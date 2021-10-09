@@ -50,8 +50,7 @@
 | :-: | :-: |
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `token` | 字符串<br />你的 SendKey<br />在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey) |
-| `use_content_as_summary` | 布尔型<br />是否将下面的 `summary`项作为摘要内容<br />`false`则将内容作为摘要 |
-| `summary` | 字符串<br />摘要，**必须有且不能为空字符串** |
+| `summary` | 字符串<br />摘要，为空则用内容作为摘要 |
 | `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 ServerChan服务器<br />格式: `http://host:port` |
 
 #### 配置 `WxPusher` 推送
@@ -95,7 +94,8 @@
 如果 置为 `false`，则关闭相应功能
 
 #### 配置全局代理服务器地址
-> `PROXY` 为 全局代理服务器地址
+> `PROXY` 为 全局代理服务器地址\
+> 如果没有为推送服务器配置默认`proxy`, 则默认使用 全局代理服务器地址`PROXY`
 
 格式为 `http://host:port`
 

@@ -1,3 +1,4 @@
+import logging
 import aiohttp
 import asyncio
 import time
@@ -31,6 +32,7 @@ class DM:
         self,
         room_id: int,
         id_: int,
+        logger: logging.Logger,
         loop=None,
         ssl=None,
         echo_queue=None,
@@ -43,25 +45,31 @@ class DM:
         self.ssl = ssl
         self.echo_queue = echo_queue
         self.id_ = id_
+        self.logger = logger
 
     async def run(self):
-        await self.__init_room__()
-        await self.__get_dm_conf__()
-        self.loop.create_task(self.__api__check__())
-        while True:
-            for value in self.serve_list:
-                try:
-                    await self.__ws__(serve=value["host"], port=value["wss_port"])
-                except:
-                    pass
-                await self.__echo__(0, "与弹幕服务器断开连接")
+        try:
             await self.__init_room__()
             await self.__get_dm_conf__()
+            self.loop.create_task(self.__api__check__())
+            while True:
+                for value in self.serve_list:
+                    try:
+                        await self.__ws__(serve=value["host"], port=value["wss_port"])
+                    except Exception:
+                        self.logger.exception("与弹幕服务器断开连接")
+                    await self.__echo__(0, "与弹幕服务器断开连接")
+                await self.__init_room__()
+                await self.__get_dm_conf__()
+        except Exception as e:
+            self.logger.error("run failure", exc_info=e)
 
     async def __api__check__(self):
         while True:
             await self.__echo__(0, "API Check")
-            status, room_id, live, _ = await get_live(room_id=self._room_id)
+            status, room_id, live, _ = await get_live(
+                room_id=self._room_id, logger=self.logger
+            )
             if status:
                 self.room_id = room_id
                 if live == 1:  # 开播
@@ -182,7 +190,9 @@ class DM:
     async def __init_room__(self):
         await self.__echo__(0, "初始化直播间数据")
 
-        status, room_id, _, uid = await get_live(room_id=self._room_id)
+        status, room_id, _, uid = await get_live(
+            room_id=self._room_id, logger=self.logger
+        )
         if status is False:
             await self.__echo__(0, "无法获取直播间真实ID")
 

@@ -1,5 +1,4 @@
 import asyncio
-from sys import flags
 import time
 from typing import *
 

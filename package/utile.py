@@ -1,4 +1,6 @@
 import asyncio
+from typing import *
+import logging
 import aiohttp
 
 
@@ -35,10 +37,11 @@ async def get_name(uid: int = 0, room_id: int = 0) -> tuple:
 
 
 async def get_live(
-    room_id: int,
-) -> tuple:  # (获取情况, 直播间真实id, 直播间状态【是否直播，0：离线，1：直播，2：轮播】, 主播uid)
+    room_id: int, logger: logging.Logger
+) -> Tuple[bool, int, int, int]:  # (获取情况, 直播间真实id, 直播间状态【是否直播，0：离线，1：直播，2：轮播】, 主播uid)
     if not room_id:
-        raise Exception("room_id 为空")
+        # raise Exception("room_id 为空")
+        return False, 0, 0, 0
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -79,7 +82,8 @@ async def get_live(
                         response["data"]["room_info"]["uid"],
                     )
             return False, 0, 0, 0
-    except:
+    except Exception:
+        logger.exception("room id: %d" % room_id)
         return False, 0, 0, 0
 
 
