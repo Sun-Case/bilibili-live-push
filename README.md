@@ -11,7 +11,7 @@
 ## 使用方法
 
 ### 安装所需库
-- 安装所需库：`pip install aiohttp` 或 `pip install -r requirements.txt`
+- 安装所需库：`pip install -r requirements.txt`
 
 ### 首次运行并配置
 -  首次运行，会在 **工作路径** 生成文件，文件名及作用如下
@@ -41,7 +41,7 @@
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `bot_token` | 字符串<br />你的机器人Token |
 | `user_id` | 字符串<br />你的Telegram账号ID |
-| `proxy` | 字符串<br />代理服务器地址, 通过代理服务器连接 Telegram服务器<br />格式: `http://host:port` |
+| `proxy` | 字符串<br />代理服务器地址, 通过代理服务器连接 Telegram服务器<br />[代理服务器地址格式](#代理服务器地址格式) |
 
 #### 配置 `ServerChan` 推送
 > `ServerChan` 字段用于配置 **Server酱** 推送
@@ -51,7 +51,7 @@
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `token` | 字符串<br />你的 SendKey<br />在 [https://sct.ftqq.com/sendkey](https://sct.ftqq.com/sendkey) |
 | `summary` | 字符串<br />摘要，为空则用内容作为摘要 |
-| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 ServerChan服务器<br />格式: `http://host:port` |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 ServerChan服务器<br />[代理服务器地址格式](#代理服务器地址格式) |
 
 #### 配置 `WxPusher` 推送
 > `WxPusher` 字段用于配置 **WxPusher** 推送
@@ -60,7 +60,7 @@
 | :-: | :-: |
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `appToken`<br />`summary`<br />`contentType`<br />`topicIds`<br />`uids`<br />`url` | 均为 **WxPusher** 字段<br />请看 [WxPusher 文档](https://wxpusher.zjiecode.com/docs/#/?id=%e5%8f%91%e9%80%81%e6%b6%88%e6%81%af-1) |
-| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 WxPusher服务器<br />格式: `http://host:port` |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 WxPusher服务器<br />[代理服务器地址格式](#代理服务器地址格式) |
 
 #### 配置 `PushPlus` 推送
 > `PushPlus` 字段用于配置 **PushPlus** 推送
@@ -70,7 +70,7 @@
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `token` | 字符串<br />你的Token |
 | `title`<br />`template`<br />`topic`<br />`channel`<br />`webhook`<br />`callbackUrl` | 均为 **PushPlus** 字段<br />请看 [PushPlus 接口文档](http://www.pushplus.plus/doc/guide/api.html) |
-| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 PushPlus服务器<br />格式: `http://host:port` |
+| `proxy` | 字符串<br />代理服务器, 通过代理服务器连接 PushPlus服务器<br />[代理服务器地址格式](#代理服务器地址格式) |
 
 #### 配置 `Qmsg` 推送【私聊推送，非群发推送】
 > `Qmsg` 字段用于配置 **Qmsg** 推送
@@ -80,7 +80,7 @@
 | `status` | 布尔型<br />`true`: 开启推送<br />`false`: 关闭推送 |
 | `key` | 字符串<br />你的key |
 | `qq` | 列表类型, 元素为字符串<br />存放你接收推送的QQ号 |
-| `proxy` | 字符串<br />代理服务器，通过代理服务器连接 Qmsg服务器 |
+| `proxy` | 字符串<br />代理服务器，通过代理服务器连接 Qmsg服务器<br />[代理服务器地址格式](#代理服务器地址格式) |
 
 #### 解决SSL证书错误
 > `SSL` 字段用于处理 aiohttp 出现 SSL证书错误
@@ -95,9 +95,18 @@
 
 #### 配置全局代理服务器地址
 > `PROXY` 为 全局代理服务器地址\
-> 如果没有为推送服务器配置默认`proxy`, 则默认使用 全局代理服务器地址`PROXY`
+> 如果没有为推送服务器配置默认`proxy`, 则默认使用 全局代理服务器地址`PROXY`\
+> [代理服务器地址格式](#代理服务器地址格式)
 
-格式为 `http://host:port`
+#### 代理服务器地址格式
+| 格式 |
+| :-: |
+| `socks5://user:password@host:port` |
+| `socks4://host:port` |
+| `http://user:password@host:port` |
+
+代理模块使用的是 [aiohttp-socks](https://github.com/romis2012/aiohttp-socks) \
+从给出的例子有以上3中格式，其他格式是否支持可以自行尝试
 
 ### 配置 `开播通知模板.txt` 及 `下播通知模板.txt`
 关键字用 **花括号** 括起来, 然后 **左花括号** 前面加上美元符号`$`，在生成消息时会替换为相应数据

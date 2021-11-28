@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import logging
 from package import get_config
+from aiohttp_socks import ProxyConnector
 
 
 class Message:
@@ -21,6 +22,13 @@ class Message:
         self.qmsg_config = config.config["Qmsg"]
         self.global_proxy = config.config["PROXY"]
 
+        self.connector = None if config.config["PROXY"] is None else ProxyConnector.from_url(config.config["PROXY"])
+        self.tele_connector = self.connector if not self.telegram_config["proxy"] else ProxyConnector.from_url(self.telegram_config["proxy"])
+        self.sc_connector = self.connector if not self.serverchan_config["proxy"] else ProxyConnector.from_url(self.serverchan_config["proxy"])
+        self.wx_connector = self.connector if not self.wxpusher_config["proxy"] else ProxyConnector.from_url(self.wxpusher_config["proxy"])
+        self.pp_connector = self.connector if not self.pushplus_config["proxy"] else ProxyConnector.from_url(self.pushplus_config["proxy"])
+        self.qmsg_connector = self.connector if not self.qmsg_config["proxy"] else ProxyConnector.from_url(self.qmsg_config["proxy"])
+
     async def Telegram(self, content: str) -> bool:
         url = (
             "https://api.telegram.org/bot%s/sendMessage"
@@ -28,12 +36,11 @@ class Message:
         )
         data = {"chat_id": self.telegram_config["user_id"], "text": content}
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(connector=self.tele_connector) as session:
                 await session.post(
                     url,
                     data=data,
                     timeout=3,
-                    proxy=self.telegram_config["proxy"] or self.global_proxy,
                 )
             return True
         except Exception:
@@ -47,12 +54,11 @@ class Message:
         else:
             data = {"text": summary, "desp": content}
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(connector=self.sc_connector) as session:
                 await session.post(
                     url,
                     data=data,
                     timeout=3,
-                    proxy=self.serverchan_config["proxy"] or self.global_proxy,
                 )
             return True
         except Exception:
@@ -79,12 +85,11 @@ class Message:
         if summary == "":
             del data["summary"]
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(connector=self.wx_connector) as session:
                 await session.post(
                     url,
                     json=data,
                     timeout=3,
-                    proxy=self.wxpusher_config["proxy"] or self.global_proxy,
                 )
             return True
         except Exception:
@@ -100,12 +105,11 @@ class Message:
             if self.pushplus_config[v]:
                 data[v] = self.pushplus_config[v]
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(connector=self.pp_connector) as session:
                 await session.get(
                     url,
                     json=data,
                     timeout=3,
-                    proxy=self.pushplus_config["proxy"] or self.global_proxy,
                 )
             return True
         except Exception:
@@ -119,12 +123,11 @@ class Message:
             data["qq"] = self.qmsg_config["qq"]
 
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(connector=self.qmsg_connector) as session:
                 await session.post(
                     url,
                     data=data,
                     timeout=3,
-                    proxy=self.qmsg_config["proxy"] or self.global_proxy,
                 )
                 return True
         except Exception:
