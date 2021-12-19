@@ -114,6 +114,7 @@ class Process:
                 HH=HH,
                 MM=MM,
                 SS=SS,
+                title=data["title"],
             )
         else:
             content = self.preparing_template.safe_substitute(
@@ -127,6 +128,7 @@ class Process:
                 HH=HH,
                 MM=MM,
                 SS=SS,
+                title=data["title"],
             )
 
         # 推送消息

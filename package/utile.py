@@ -1,7 +1,26 @@
 import asyncio
+import json
 from typing import *
 import logging
 import aiohttp
+import re
+
+
+async def get_room_title(room_id: int = 0) -> Tuple[bool, str]:
+    url = "https://live.bilibili.com/%s" % room_id
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ("
+                                                           "KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"}) \
+                as resp:
+            text = await resp.text("utf-8")
+            text_re = re.findall(r"window\.__NEPTUNE_IS_MY_WAIFU__=(.*?)<", text)
+            if text_re:
+                try:
+                    text_json = json.loads(text_re[1])
+                    return True, text_json["roomInfoRes"]["data"]["room_info"]["title"]
+                except Exception:
+                    pass
+    return False, ""
 
 
 async def get_name(uid: int = 0, room_id: int = 0) -> tuple:
@@ -90,8 +109,9 @@ async def get_live(
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     tasks = [
-        asyncio.ensure_future(get_name(uid=11783021, room_id=931774)),
-        asyncio.ensure_future(get_live(room_id=931774)),
+        # asyncio.ensure_future(get_name(uid=11783021, room_id=931774)),
+        # asyncio.ensure_future(get_live(room_id=931774)),
+        asyncio.ensure_future(get_room_title(room_id=11783021))
     ]
     loop.run_until_complete(asyncio.wait(tasks))
     for task in tasks:

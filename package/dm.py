@@ -6,7 +6,7 @@ import struct
 import json
 import zlib
 from collections import namedtuple
-from package.utile import get_name, get_live
+from package.utile import get_name, get_live, get_room_title
 
 
 class DM:
@@ -219,6 +219,10 @@ class DM:
             3: 主播名字
             4: 直播状态
         """
+
+        # 获取标题
+        status, title = await get_room_title(self.room_id)
+
         if self.echo_queue:
             await self.echo_queue.put(
                 {
@@ -230,6 +234,7 @@ class DM:
                     "name": self.name,
                     "uid": self.uid,
                     "time": time.time(),
+                    "title": title,
                 }
             )
 
